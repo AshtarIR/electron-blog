@@ -3,8 +3,9 @@ import {
   Search, Menu, X, Clock, Calendar, Share2, Link2, ChevronLeft, ChevronRight,
   Send, Instagram, Plus, Pencil, Trash2, Image as ImageIcon, Save,
   LayoutDashboard, FileText, Tags, Eye, EyeOff, Atom, Mail, MapPin, Phone,
-  ArrowUpLeft, Quote as QuoteIcon, Twitter
+  ArrowUpLeft, Quote as QuoteIcon, Twitter, LogOut, Lock
 } from "lucide-react";
+import { supabase, isSupabaseConfigured } from "./lib/supabaseClient";
 
 /* ------------------------------------------------------------------ */
 /*  Design tokens                                                      */
@@ -138,6 +139,40 @@ function readingTime(paragraphs) {
 }
 function uid() {
   return "u" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+// Maps a Supabase `articles` row (snake_case) to the shape the UI expects.
+function fromDbRow(row) {
+  return {
+    id: row.id,
+    title: row.title,
+    excerpt: row.excerpt || "",
+    category: row.category,
+    date: row.date_label || new Date(row.created_at).toLocaleDateString("fa-IR"),
+    tags: row.tags || [],
+    content: row.content && row.content.length ? row.content : [""],
+    draft: row.draft,
+    featured: row.featured,
+    coverUrl: row.cover_url || null,
+    seo: { metaTitle: row.seo_title || "", metaDescription: row.seo_description || "" },
+  };
+}
+
+// Maps the UI's article shape back to Supabase columns for insert/update.
+function toDbRow(article) {
+  return {
+    title: article.title,
+    excerpt: article.excerpt,
+    category: article.category,
+    date_label: article.date,
+    tags: article.tags,
+    content: article.content,
+    draft: article.draft,
+    featured: article.featured || false,
+    cover_url: article.coverUrl || null,
+    seo_title: article.seo?.metaTitle || "",
+    seo_description: article.seo?.metaDescription || "",
+  };
 }
 
 /* ------------------------------------------------------------------ */
@@ -908,41 +943,101 @@ function Contact() {
 }
 
 /* ------------------------------------------------------------------ */
+/*  ADMIN LOGIN                                                         */
+/* ------------------------------------------------------------------ */
+function AdminLogin({ onSignedIn }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  if (!isSupabaseConfigured) {
+    return (
+      <div className="max-w-md mx-auto px-5 pt-24 pb-20 text-center">
+        <Lock size={30} className="mx-auto mb-4" color={COLORS.primary} />
+        <h1 className="text-xl font-bold mb-2" style={{ color: COLORS.ink }}>پنل مدیریت هنوز متصل نیست</h1>
+        <p className="text-[13.5px] text-neutral-500 leading-7">
+          برای فعال‌شدن ورود امن، مقادیر <code dir="ltr">VITE_SUPABASE_URL</code> و{" "}
+          <code dir="ltr">VITE_SUPABASE_ANON_KEY</code> را در فایل <code dir="ltr">.env</code> (یا env
+          سایت روی Cloudflare) تنظیم کنید. راهنمای کامل در README پروژه است.
+        </p>
+      </div>
+    );
+  }
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setBusy(true);
+    setError("");
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    setBusy(false);
+    if (error) setError("ایمیل یا رمز عبور نادرست است.");
+    else onSignedIn();
+  };
+
+  return (
+    <div className="max-w-sm mx-auto px-5 pt-24 pb-20">
+      <div className="text-center mb-8">
+        <Lock size={26} className="mx-auto mb-3" color={COLORS.primary} />
+        <h1 className="text-xl font-bold" style={{ color: COLORS.ink }}>ورود به پنل مدیریت</h1>
+        <p className="text-[13px] text-neutral-400 mt-1">فقط برای نویسنده‌ی سایت</p>
+      </div>
+      <form onSubmit={submit} className="bg-white rounded-2xl p-6 space-y-4" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+        <input required type="email" placeholder="ایمیل" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-[#F8F9FA] outline-none text-[14px]" dir="ltr" />
+        <input required type="password" placeholder="رمز عبور" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-4 py-3 rounded-xl bg-[#F8F9FA] outline-none text-[14px]" dir="ltr" />
+        {error && <p className="text-[12.5px] text-red-600">{error}</p>}
+        <button disabled={busy} type="submit" className="w-full py-3 rounded-full text-[14px] font-semibold text-white transition-transform hover:-translate-y-0.5 disabled:opacity-50" style={{ background: COLORS.primary }}>
+          {busy ? "در حال ورود…" : "ورود"}
+        </button>
+      </form>
+      <p className="text-[12px] text-neutral-400 text-center mt-5 leading-6">
+        حساب ادمین از داشبورد Supabase (Authentication → Users) ساخته می‌شود، نه از این فرم.
+      </p>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  ADMIN CMS                                                           */
 /* ------------------------------------------------------------------ */
-const STORAGE_KEY = "electron:admin-articles";
-
-function AdminPanel({ customArticles, setCustomArticles }) {
+function AdminPanel() {
+  const [session, setSession] = useState(undefined); // undefined = loading
   const [tab, setTab] = useState("dashboard");
-  const [editing, setEditing] = useState(null); // article object or null
-  const [saving, setSaving] = useState(false);
-  const [loaded, setLoaded] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [articles, setArticles] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    (async () => {
-      try {
-        const res = await window.storage.get(STORAGE_KEY, false);
-        if (res && res.value) setCustomArticles(JSON.parse(res.value));
-      } catch (e) {
-        // key doesn't exist yet — fine
-      }
-      setLoaded(true);
-    })();
+    if (!isSupabaseConfigured) { setSession(null); return; }
+    supabase.auth.getSession().then(({ data }) => setSession(data.session));
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, sess) => setSession(sess));
+    return () => sub.subscription.unsubscribe();
   }, []);
 
-  const persist = async (list) => {
-    setSaving(true);
-    try {
-      await window.storage.set(STORAGE_KEY, JSON.stringify(list), false);
-    } catch (e) {
-      console.error("storage error", e);
-    }
-    setSaving(false);
+  const loadArticles = async () => {
+    setLoading(true);
+    setError("");
+    const { data, error } = await supabase.from("articles").select("*").order("created_at", { ascending: false });
+    if (error) setError(error.message);
+    else setArticles(data.map(fromDbRow));
+    setLoading(false);
   };
+
+  useEffect(() => {
+    if (session) loadArticles();
+  }, [session]);
+
+  if (session === undefined) {
+    return <div className="max-w-6xl mx-auto px-5 pt-24 pb-20 text-center text-neutral-400 text-[14px]">در حال بررسی نشست…</div>;
+  }
+  if (!session) {
+    return <AdminLogin onSignedIn={() => {}} />;
+  }
 
   const startNew = () => {
     setEditing({
-      id: uid(),
+      id: null,
       title: "",
       excerpt: "",
       category: CATEGORIES[0].id,
@@ -950,29 +1045,31 @@ function AdminPanel({ customArticles, setCustomArticles }) {
       tags: [],
       content: [""],
       draft: true,
+      featured: false,
       seo: { metaTitle: "", metaDescription: "" },
     });
     setTab("editor");
   };
 
-  const saveArticle = (art) => {
-    setCustomArticles((prev) => {
-      const exists = prev.some((a) => a.id === art.id);
-      const next = exists ? prev.map((a) => (a.id === art.id ? art : a)) : [art, ...prev];
-      persist(next);
-      return next;
-    });
-    setEditing(null);
-    setTab("articles");
+  const saveArticle = async (art) => {
+    setLoading(true);
+    setError("");
+    const row = toDbRow(art);
+    const { error } = art.id
+      ? await supabase.from("articles").update(row).eq("id", art.id)
+      : await supabase.from("articles").insert(row);
+    if (error) setError(error.message);
+    else { await loadArticles(); setEditing(null); setTab("articles"); }
+    setLoading(false);
   };
 
-  const deleteArticle = (id) => {
-    setCustomArticles((prev) => {
-      const next = prev.filter((a) => a.id !== id);
-      persist(next);
-      return next;
-    });
+  const deleteArticle = async (id) => {
+    const { error } = await supabase.from("articles").delete().eq("id", id);
+    if (error) setError(error.message);
+    else setArticles((prev) => prev.filter((a) => a.id !== id));
   };
+
+  const signOut = async () => { await supabase.auth.signOut(); };
 
   const nav = [
     { id: "dashboard", label: "داشبورد", Icon: LayoutDashboard },
@@ -983,13 +1080,19 @@ function AdminPanel({ customArticles, setCustomArticles }) {
   return (
     <div className="max-w-6xl mx-auto px-5 md:px-8 pt-10 pb-20">
       <Reveal>
-        <div className="flex items-center gap-3 mb-2">
-          <OrbitMark size={26} />
-          <h1 className="text-2xl font-extrabold" style={{ color: COLORS.ink }}>پنل مدیریت الکترون</h1>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-3">
+            <OrbitMark size={26} />
+            <h1 className="text-2xl font-extrabold" style={{ color: COLORS.ink }}>پنل مدیریت الکترون</h1>
+          </div>
+          <button onClick={signOut} className="flex items-center gap-1.5 text-[13px] text-neutral-400 hover:text-neutral-700">
+            <LogOut size={14} /> خروج ({session.user.email})
+          </button>
         </div>
         <p className="text-[13.5px] text-neutral-400 mb-8">
-          {saving ? "در حال ذخیره…" : "مقالات شما در حافظه‌ی این مرورگر ذخیره می‌شود."}
+          {loading ? "در حال بارگذاری…" : "مقالات مستقیماً در دیتابیس Supabase ذخیره می‌شوند و برای همه‌ی بازدیدکنندگان (روی هر دستگاهی) قابل مشاهده‌اند."}
         </p>
+        {error && <p className="text-[13px] text-red-600 mb-6">خطا: {error}</p>}
       </Reveal>
 
       <div className="grid md:grid-cols-[220px_1fr] gap-8">
@@ -1017,8 +1120,8 @@ function AdminPanel({ customArticles, setCustomArticles }) {
           {tab === "dashboard" && (
             <div className="grid sm:grid-cols-3 gap-5">
               {[
-                { l: "کل مقالات", v: customArticles.length + SEED_ARTICLES.length },
-                { l: "پیش‌نویس‌ها", v: customArticles.filter((a) => a.draft).length },
+                { l: "کل مقالات", v: articles.length },
+                { l: "پیش‌نویس‌ها", v: articles.filter((a) => a.draft).length },
                 { l: "دسته‌بندی‌ها", v: CATEGORIES.length },
               ].map((s) => (
                 <div key={s.l} className="p-6 rounded-2xl bg-white" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
@@ -1027,7 +1130,7 @@ function AdminPanel({ customArticles, setCustomArticles }) {
                 </div>
               ))}
               <div className="sm:col-span-3 p-6 rounded-2xl bg-white text-[13.5px] text-neutral-500 leading-7" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
-                این یک پیش‌نمایش عملکردی از پنل مدیریت است. مقالات پایه‌ای (۶ مورد) به‌صورت نمونه در طراحی گنجانده شده‌اند و مقالات جدیدی که اینجا می‌سازید در حافظه‌ی مرورگر شما ذخیره و در بخش «مقالات» سایت نمایش داده می‌شوند (در صورتی که پیش‌نویس نباشند).
+                این پنل حالا به دیتابیس واقعی (Supabase Postgres) وصل است: مقالاتی که اینجا می‌سازید یا ویرایش می‌کنید، برای همه‌ی بازدیدکنندگان سایت — از هر دستگاهی — قابل مشاهده‌اند (مگر آن‌که «پیش‌نویس» باشند).
               </div>
             </div>
           )}
@@ -1037,12 +1140,12 @@ function AdminPanel({ customArticles, setCustomArticles }) {
               <div className="grid grid-cols-[1fr_auto_auto_auto] gap-3 px-5 py-3 text-[12px] text-neutral-400 border-b border-black/5">
                 <span>عنوان</span><span>دسته</span><span>وضعیت</span><span></span>
               </div>
-              {customArticles.length === 0 && (
+              {articles.length === 0 && !loading && (
                 <div className="px-5 py-10 text-center text-[13.5px] text-neutral-400">
-                  هنوز مقاله‌ای از پنل مدیریت ایجاد نکرده‌اید. با دکمه «مقاله جدید» شروع کنید.
+                  هنوز مقاله‌ای در دیتابیس نیست. با دکمه «مقاله جدید» شروع کنید (یا فایل sql/schema.sql را برای داده‌ی نمونه اجرا کنید).
                 </div>
               )}
-              {customArticles.map((a) => (
+              {articles.map((a) => (
                 <div key={a.id} className="grid grid-cols-[1fr_auto_auto_auto] gap-3 px-5 py-3.5 items-center border-b border-black/5 last:border-0 text-[13.5px]">
                   <span className="font-medium truncate" style={{ color: COLORS.ink }}>{a.title || "(بدون عنوان)"}</span>
                   <span className="text-neutral-400 whitespace-nowrap">{catById(a.category)?.fa}</span>
@@ -1077,7 +1180,7 @@ function AdminPanel({ customArticles, setCustomArticles }) {
                   <span className="text-[12px] px-2.5 py-1 rounded-full" style={{ background: "rgba(193,18,31,0.08)", color: COLORS.primary }}>ثابت</span>
                 </div>
               ))}
-              <p className="sm:col-span-2 text-[12.5px] text-neutral-400">دسته‌بندی‌ها در این نسخه‌ی پیش‌نمایش ثابت تعریف شده‌اند؛ در نسخه‌ی نهایی قابل افزودن/ویرایش از همین پنل خواهند بود.</p>
+              <p className="sm:col-span-2 text-[12.5px] text-neutral-400">دسته‌بندی‌ها در این نسخه ثابت تعریف شده‌اند؛ در آینده می‌توان یک جدول categories جدا در Supabase اضافه کرد.</p>
             </div>
           )}
         </div>
@@ -1185,13 +1288,26 @@ export default function ElectronBlog() {
   const [page, setPage] = useState("home");
   const [activeId, setActiveId] = useState(null);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [customArticles, setCustomArticles] = useState([]);
+  const [dbArticles, setDbArticles] = useState(null); // null = not loaded yet
   const [, setFilterCat] = useState("all");
 
+  useEffect(() => {
+    if (!isSupabaseConfigured) return; // stay on seed data
+    (async () => {
+      const { data, error } = await supabase
+        .from("articles")
+        .select("*")
+        .eq("draft", false)
+        .order("created_at", { ascending: false });
+      if (!error && data) setDbArticles(data.map(fromDbRow));
+    })();
+  }, []);
+
+  // Prefer live database articles once loaded; fall back to the built-in
+  // sample set so the site still looks complete before Supabase is wired up.
   const allArticles = useMemo(() => {
-    const published = customArticles.filter((a) => !a.draft);
-    return [...published, ...SEED_ARTICLES];
-  }, [customArticles]);
+    return dbArticles && dbArticles.length ? dbArticles : SEED_ARTICLES;
+  }, [dbArticles]);
 
   const go = (p) => { setPage(p); setSearchOpen(false); window.scrollTo({ top: 0, behavior: "smooth" }); };
   const openArticle = (id) => { setActiveId(id); setPage("article"); window.scrollTo({ top: 0 }); };
@@ -1220,7 +1336,7 @@ export default function ElectronBlog() {
       {page === "categories" && <CategoriesPage articles={allArticles} go={go} setFilterCat={setFilterCat} />}
       {page === "about" && <About />}
       {page === "contact" && <Contact />}
-      {page === "admin" && <AdminPanel customArticles={customArticles} setCustomArticles={setCustomArticles} />}
+      {page === "admin" && <AdminPanel />}
 
       {page !== "admin" && <Footer go={go} />}
     </div>
