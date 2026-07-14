@@ -436,7 +436,7 @@ function Footer({ go }) {
               <span className="font-bold text-lg">الکترون</span>
             </div>
             <p className="text-[14px] leading-8 text-white/55 max-w-sm">
-              پلتفرمی شخصی برای تحلیل‌های عمیق سیاسی و راهبردی؛ نوشته‌شده برای خوانندگانی که به جای هیجان لحظه، دقتِ نگاه را می‌جویند.
+             پلتفرم مکمل چنل الکترون ، برای تحلیل های بلند تر، تخصصا برای مخاطبان سطح بالا.
             </p>
             <div className="flex items-center gap-3 mt-6">
               {[Twitter, Send, Instagram].map((Icon, i) => (
@@ -468,7 +468,7 @@ function Footer({ go }) {
         </div>
 
         <div className="mt-14 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-[12.5px] text-white/40">
-          <span>© {1404} الکترون — تمام حقوق محفوظ است.</span>
+          <span>© {1405} الکترون — تمام حقوق محفوظ است.</span>
           <span>ساخته‌شده با دقت، برای خوانندگانی که فکر می‌کنند.</span>
         </div>
       </div>
@@ -545,8 +545,7 @@ function Home({ articles, openArticle, go }) {
           </Reveal>
           <Reveal delay={160}>
             <p className="mt-8 text-[17px] md:text-xl leading-9 text-neutral-500 max-w-xl mx-auto">
-              نوشته‌های شخصی سیاسی و تحلیل راهبردی؛ جایی برای فکرکردنِ آرام درباره‌ی قدرت، جامعه و آینده.
-            </p>
+نوشته های شخصی یه فعال رسانه ای دهه هشتادی            </p>
           </Reveal>
           <Reveal delay={240}>
             <div className="mt-10 flex items-center justify-center gap-3">
@@ -897,9 +896,9 @@ function Contact() {
       <Reveal delay={80}>
         <div className="grid md:grid-cols-3 gap-5 mb-12">
           {[
-            { Icon: Mail, l: "ایمیل", v: "contact@electron.blog" },
-            { Icon: MapPin, l: "موقعیت", v: "تهران، ایران" },
-            { Icon: Phone, l: "شبکه‌های اجتماعی", v: "@electron" },
+            { Icon: Mail, l: "ایمیل", v: "شرمنده(:" },
+            { Icon: MapPin, l: "موقعیت", v: "قزوین، ایران" },
+            { Icon: Phone, l: " کانال بله", v: "@electron_ir" },
           ].map((it) => (
             <div key={it.l} className="p-5 rounded-2xl bg-white flex items-start gap-3" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
               <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(193,18,31,0.08)" }}>
@@ -933,7 +932,7 @@ function Contact() {
             <input placeholder="موضوع" className="w-full px-4 py-3 rounded-xl bg-[#F8F9FA] outline-none text-[14px]" />
             <textarea required rows={5} placeholder="پیام شما…" className="w-full px-4 py-3 rounded-xl bg-[#F8F9FA] outline-none text-[14px] resize-none" />
             <button type="submit" className="px-6 py-3 rounded-full text-[14px] font-semibold text-white transition-transform hover:-translate-y-0.5" style={{ background: COLORS.primary }}>
-              ارسال پیام
+              ارسال پیام(بزن روش ولی کار نمیکنه)
             </button>
           </form>
         )}
