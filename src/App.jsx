@@ -971,7 +971,7 @@ function AdminLogin({ onSignedIn }) {
     setError("");
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setBusy(false);
-    if (error) setError("ایمیل یا رمز عبور نادرست است.");
+    if (error) setError(`خطا: ${error.message}`);
     else onSignedIn();
   };
 
