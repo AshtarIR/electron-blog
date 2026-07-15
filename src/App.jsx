@@ -3,7 +3,9 @@ import {
   Search, Menu, X, Clock, Calendar, Share2, Link2, ChevronLeft, ChevronRight,
   Send, Instagram, Plus, Pencil, Trash2, Image as ImageIcon, Save,
   LayoutDashboard, FileText, Tags, Eye, EyeOff, Atom, Mail, MapPin, Phone,
-  ArrowUpLeft, Quote as QuoteIcon, Twitter, LogOut, Lock
+  ArrowUpLeft, Quote as QuoteIcon, Twitter, LogOut, Lock,
+  Bold, Italic, Underline, List, ListOrdered, Heading2, Undo2, Redo2, Star,
+  AlertTriangle, RefreshCw
 } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "./lib/supabaseClient";
 
@@ -31,100 +33,6 @@ const CATEGORIES = [
 
 const catById = (id) => CATEGORIES.find((c) => c.id === id);
 
-const SEED_ARTICLES = [
-  {
-    id: "a1",
-    title: "معمای مشروعیت در دولت‌های پساتحول",
-    excerpt:
-      "چرا برخی نظام‌های سیاسی پس از تحولات بزرگ، سال‌ها با بحران مشروعیت دست‌وپنجه نرم می‌کنند؟ نگاهی تحلیلی به سازوکارهای بازتولید مشروعیت.",
-    category: "governance",
-    date: "1404/03/12",
-    tags: ["مشروعیت", "دولت", "نظریه سیاسی"],
-    featured: true,
-    content: [
-      "مشروعیت سیاسی، برخلاف تصور رایج، یک‌بار برای همیشه کسب نمی‌شود؛ بلکه فرآیندی مستمر از اقناع، عملکرد و روایت‌سازی است که هر نظام سیاسی موظف است روزانه آن را بازتولید کند.",
-      "در دوره‌های گذار، شکاف میان مشروعیت رویه‌ای و مشروعیت کارکردی بیش از هر زمان دیگری خود را نشان می‌دهد. نظامی که از مسیر انتخابات یا انقلاب به قدرت می‌رسد، اگر نتواند در کوتاه‌مدت عملکرد قابل قبولی از خود نشان دهد، به‌تدریج سرمایه نمادین آغازین خود را از دست می‌دهد.",
-      "تجربه بسیاری از کشورها نشان می‌دهد که ترکیب سه عنصر روایت مؤسس، کارآمدی اقتصادی، و مشارکت نهادینه‌شده، تعیین‌کننده پایداری مشروعیت در بلندمدت است. غیبت هر یک از این ارکان، فضا را برای بحران‌های تدریجی مشروعیت باز می‌کند.",
-      "پرسش نهایی این است: آیا مشروعیت را می‌توان مهندسی کرد، یا صرفاً می‌توان بستر رشد طبیعی آن را فراهم آورد؟ پاسخ به این پرسش، مسیر بسیاری از تصمیمات راهبردی حکمرانان را روشن می‌کند.",
-    ],
-  },
-  {
-    id: "a2",
-    title: "ژئوپلیتیک انرژی و بازآرایی قدرت در غرب آسیا",
-    excerpt:
-      "مسیرهای انتقال انرژی همچنان یکی از متغیرهای تعیین‌کننده در معماری قدرت منطقه‌ای است. بررسی روندهای تازه در نقشه انرژی خاورمیانه.",
-    category: "geopolitics",
-    date: "1404/03/05",
-    tags: ["انرژی", "خاورمیانه", "قدرت منطقه‌ای"],
-    featured: false,
-    content: [
-      "کریدورهای انرژی هیچ‌گاه صرفاً پروژه‌های اقتصادی نبوده‌اند؛ آن‌ها نقشه‌ای هستند از منافع، اتحادها و رقابت‌های پنهان میان بازیگران منطقه‌ای و فرامنطقه‌ای.",
-      "تنوع‌بخشی به مسیرهای صادراتی، در سال‌های اخیر به یک اولویت راهبردی برای بسیاری از تولیدکنندگان انرژی تبدیل شده است؛ نه صرفاً به دلایل اقتصادی، بلکه برای کاهش آسیب‌پذیری ژئوپلیتیک.",
-      "در این میان، بازیگرانی که بتوانند خود را به‌عنوان گره‌های ضروری در این شبکه معرفی کنند، از اهرم چانه‌زنی بیشتری در معادلات سیاسی منطقه برخوردار خواهند شد.",
-    ],
-  },
-  {
-    id: "a3",
-    title: "حکمرانی دیجیتال: وقتی الگوریتم‌ها سیاست می‌سازند",
-    excerpt:
-      "از تصمیم‌گیری خودکار در بوروکراسی تا مهندسی افکار عمومی در فضای مجازی؛ الگوریتم‌ها دیگر ابزار صرف نیستند، بازیگرند.",
-    category: "governance",
-    date: "1404/02/28",
-    tags: ["فناوری", "حکمرانی دیجیتال", "افکار عمومی"],
-    featured: false,
-    content: [
-      "دولت‌ها به‌طور فزاینده‌ای از سامانه‌های الگوریتمی برای تخصیص منابع، ارزیابی ریسک و حتی پیش‌بینی رفتار شهروندان استفاده می‌کنند؛ روندی که پرسش‌های جدی درباره پاسخگویی و شفافیت را برجسته می‌سازد.",
-      "وقتی تصمیمی که سرنوشت یک شهروند را تغییر می‌دهد، از دل یک مدل محاسباتی بیرون می‌آید، مسئولیت سیاسی کجا قرار می‌گیرد؟ این پرسش هسته اصلی مناقشات آینده حکمرانی خواهد بود.",
-      "از سوی دیگر، پلتفرم‌های اجتماعی با طراحی الگوریتم‌های توصیه‌گر خود، عملاً در حال شکل‌دادن به دستور کار عمومی هستند؛ نقشی که پیش‌تر صرفاً بر عهده رسانه‌های سنتی بود.",
-    ],
-  },
-  {
-    id: "a4",
-    title: "اقتصاد سیاسی تحریم: ابزار یا استراتژی؟",
-    excerpt:
-      "تحریم‌ها اغلب به‌عنوان ابزاری کوتاه‌مدت معرفی می‌شوند، اما در عمل به بخشی از معماری بلندمدت روابط قدرت بدل شده‌اند.",
-    category: "economics",
-    date: "1404/02/19",
-    tags: ["تحریم", "اقتصاد سیاسی", "دیپلماسی اقتصادی"],
-    featured: true,
-    content: [
-      "تحریم اقتصادی، در ادبیات سیاست خارجی، معمولاً به‌عنوان جایگزینی برای اقدام نظامی معرفی می‌شود؛ اما تجربه چند دهه اخیر نشان می‌دهد کارکرد آن بسیار پیچیده‌تر از یک ابزار فشار ساده است.",
-      "اثربخشی تحریم به سه عامل بستگی دارد: میزان وابستگی اقتصاد هدف به شبکه جهانی، ظرفیت دولت هدف برای بازتوزیع هزینه‌ها در داخل، و انسجام ائتلاف تحریم‌کننده در بلندمدت.",
-      "در بسیاری از موارد، تحریم‌ها به‌جای تغییر رفتار سیاسی، صرفاً ساختار اقتصادی داخلی کشور هدف را بازآرایی می‌کنند و بازیگران اقتصادی جدیدی را در کانون قدرت قرار می‌دهند.",
-    ],
-  },
-  {
-    id: "a5",
-    title: "درس‌های تاریخ برای دیپلماسی امروز",
-    excerpt:
-      "الگوهای مذاکراتی که یک قرن پیش شکل گرفتند، هنوز هم در پس بسیاری از تصمیمات دیپلماتیک امروز قابل ردیابی‌اند.",
-    category: "history",
-    date: "1404/02/10",
-    tags: ["تاریخ دیپلماسی", "مذاکره", "نظم بین‌الملل"],
-    featured: false,
-    content: [
-      "بازخوانی مذاکرات بزرگ تاریخی نشان می‌دهد که موفقیت دیپلماتیک کمتر محصول لحظه امضای توافق است و بیشتر نتیجه سال‌ها زمینه‌سازی، اعتمادسازی تدریجی و مدیریت دقیق افکار عمومی داخلی طرف‌های مذاکره بوده است.",
-      "یکی از الگوهای تکرارشونده در تاریخ دیپلماسی، نقش «واسطه‌های قابل‌اعتماد» است؛ بازیگرانی که با وجود نداشتن منافع مستقیم در نتیجه مذاکره، به دلیل اعتبار انباشته‌شده، امکان نزدیک‌کردن مواضع را فراهم می‌آورند.",
-      "درک این الگوها به ما کمک می‌کند تا رفتار دیپلماتیک امروز را نه به‌عنوان رویدادهای مجزا، بلکه در امتداد یک سنت طولانی از آزمون و خطا بخوانیم.",
-    ],
-  },
-  {
-    id: "a6",
-    title: "روابط بین‌الملل در جهان چندقطبی نوظهور",
-    excerpt:
-      "نظم تک‌قطبی پس از جنگ سرد به‌آرامی جای خود را به معماری‌ای چندلایه و کمتر قابل‌پیش‌بینی می‌دهد.",
-    category: "ir",
-    date: "1404/01/30",
-    tags: ["نظم جهانی", "چندجانبه‌گرایی", "توازن قوا"],
-    featured: false,
-    content: [
-      "برخلاف گذار از نظم دوقطبی به تک‌قطبی که با فروپاشی نسبتاً سریع یک قطب همراه بود، گذار کنونی به‌مراتب تدریجی‌تر و پیچیده‌تر است و بازیگران متعددی به‌طور هم‌زمان در حال بازتعریف جایگاه خود هستند.",
-      "در چنین محیطی، اتحادهای موضوعی و موقت جای ائتلاف‌های ایدئولوژیک بلندمدت را می‌گیرند؛ کشورها بر اساس منافع مشخص در هر پرونده، ائتلاف‌های متفاوتی می‌سازند.",
-      "این وضعیت، اگرچه فضای مانور بیشتری برای قدرت‌های میانی فراهم می‌کند، اما پیش‌بینی‌پذیری نظم جهانی را نیز به شدت کاهش می‌دهد.",
-    ],
-  },
-];
-
 const QUOTE = {
   fa: "قدرتِ واقعیِ یک تحلیل، نه در هیجانِ لحظه که در دقتِ نگاهِ آن به آینده نهفته است.",
   by: "الکترون",
@@ -133,8 +41,9 @@ const QUOTE = {
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                             */
 /* ------------------------------------------------------------------ */
-function readingTime(paragraphs) {
-  const words = paragraphs.join(" ").split(/\s+/).filter(Boolean).length;
+function readingTime(html) {
+  const text = (html || "").replace(/<[^>]*>/g, " ");
+  const words = text.split(/\s+/).filter(Boolean).length;
   return Math.max(1, Math.round(words / 150));
 }
 function uid() {
@@ -147,10 +56,10 @@ function fromDbRow(row) {
     id: row.id,
     title: row.title,
     excerpt: row.excerpt || "",
-    category: row.category,
+    categories: row.categories && row.categories.length ? row.categories : [row.category].filter(Boolean),
     date: row.date_label || new Date(row.created_at).toLocaleDateString("fa-IR"),
     tags: row.tags || [],
-    content: row.content && row.content.length ? row.content : [""],
+    content: row.content || "",
     draft: row.draft,
     featured: row.featured,
     coverUrl: row.cover_url || null,
@@ -163,7 +72,7 @@ function toDbRow(article) {
   return {
     title: article.title,
     excerpt: article.excerpt,
-    category: article.category,
+    categories: article.categories,
     date_label: article.date,
     tags: article.tags,
     content: article.content,
@@ -229,6 +138,65 @@ function Reveal({ children, className = "", delay = 0 }) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Error handling — catches crashes + shows friendly empty/error states*/
+/* ------------------------------------------------------------------ */
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error, info) {
+    console.error("Electron blog crashed:", error, info);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div dir="rtl" lang="fa" style={{ fontFamily: "'Vazirmatn', sans-serif", background: COLORS.bg, minHeight: "100vh" }} className="flex items-center justify-center px-6">
+          <div className="max-w-sm text-center">
+            <AlertTriangle size={36} color={COLORS.primary} className="mx-auto mb-5" />
+            <h1 className="text-xl font-bold mb-2" style={{ color: COLORS.ink }}>یک خطای غیرمنتظره پیش آمد</h1>
+            <p className="text-[14px] text-neutral-500 leading-7 mb-6">
+              متأسفانه در نمایش این صفحه مشکلی پیش آمد. می‌توانید صفحه را دوباره بارگذاری کنید.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-[14px] font-semibold text-white"
+              style={{ background: COLORS.primary }}
+            >
+              <RefreshCw size={15} /> بارگذاری مجدد
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+function EmptyState({ title, note, actionLabel, onAction, tone = "neutral" }) {
+  return (
+    <div className="max-w-md mx-auto px-5 py-24 text-center">
+      <AlertTriangle size={30} className="mx-auto mb-4" color={tone === "error" ? COLORS.primary : "#c9c9cc"} />
+      <h2 className="text-lg font-bold mb-2" style={{ color: COLORS.ink }}>{title}</h2>
+      {note && <p className="text-[13.5px] text-neutral-500 leading-7 mb-6">{note}</p>}
+      {actionLabel && (
+        <button
+          onClick={onAction}
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-[13.5px] font-semibold text-white"
+          style={{ background: COLORS.primary }}
+        >
+          {actionLabel}
+        </button>
+      )}
+    </div>
+  );
+}
+
+
+/* ------------------------------------------------------------------ */
 /*  Signature mark — electron orbit                                    */
 /* ------------------------------------------------------------------ */
 function OrbitMark({ size = 34 }) {
@@ -283,7 +251,14 @@ function OrbitField({ opacity = 1 }) {
 /* ------------------------------------------------------------------ */
 /*  Article cover placeholder                                          */
 /* ------------------------------------------------------------------ */
-function Cover({ className = "" }) {
+function Cover({ className = "", url = null }) {
+  if (url) {
+    return (
+      <div className={`relative overflow-hidden rounded-2xl bg-neutral-100 ${className}`}>
+        <img src={url} alt="" className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
+      </div>
+    );
+  }
   return (
     <div
       className={`relative overflow-hidden rounded-2xl ${className}`}
@@ -436,7 +411,7 @@ function Footer({ go }) {
               <span className="font-bold text-lg">الکترون</span>
             </div>
             <p className="text-[14px] leading-8 text-white/55 max-w-sm">
-             پلتفرم مکمل چنل الکترون ، برای تحلیل های بلند تر، تخصصا برای مخاطبان سطح بالا.
+              پلتفرمی شخصی برای تحلیل‌های عمیق سیاسی و راهبردی؛ نوشته‌شده برای خوانندگانی که به جای هیجان لحظه، دقتِ نگاه را می‌جویند.
             </p>
             <div className="flex items-center gap-3 mt-6">
               {[Twitter, Send, Instagram].map((Icon, i) => (
@@ -468,7 +443,7 @@ function Footer({ go }) {
         </div>
 
         <div className="mt-14 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-[12.5px] text-white/40">
-          <span>© {1405} الکترون — تمام حقوق محفوظ است.</span>
+          <span>© {1404} الکترون — تمام حقوق محفوظ است.</span>
           <span>ساخته‌شده با دقت، برای خوانندگانی که فکر می‌کنند.</span>
         </div>
       </div>
@@ -480,21 +455,26 @@ function Footer({ go }) {
 /*  Article card                                                       */
 /* ------------------------------------------------------------------ */
 function ArticleCard({ article, onOpen, big = false }) {
-  const cat = catById(article.category);
+  const cats = (article.categories || []).map(catById).filter(Boolean);
   return (
     <button
       onClick={() => onOpen(article.id)}
       className={`group text-right w-full ${big ? "" : ""}`}
     >
-      <Cover className={big ? "h-64 md:h-80 w-full" : "h-44 w-full"} />
+      <Cover url={article.coverUrl} className={big ? "h-64 md:h-80 w-full" : "h-44 w-full"} />
       <div className={big ? "pt-2" : "pt-0"} />
       <div className="mt-4">
-        <span
-          className="inline-block text-[11.5px] font-medium px-2.5 py-1 rounded-full mb-3"
-          style={{ background: "rgba(193,18,31,0.08)", color: COLORS.primary }}
-        >
-          {cat.fa}
-        </span>
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {cats.map((cat) => (
+            <span
+              key={cat.id}
+              className="inline-block text-[11.5px] font-medium px-2.5 py-1 rounded-full"
+              style={{ background: "rgba(193,18,31,0.08)", color: COLORS.primary }}
+            >
+              {cat.fa}
+            </span>
+          ))}
+        </div>
         <h3
           className={`font-bold leading-relaxed transition-colors duration-200 group-hover:text-[color:var(--p)] ${big ? "text-2xl md:text-[28px]" : "text-lg"}`}
           style={{ color: COLORS.ink, "--p": COLORS.primary }}
@@ -516,9 +496,9 @@ function ArticleCard({ article, onOpen, big = false }) {
 /* ------------------------------------------------------------------ */
 /*  HOME                                                                */
 /* ------------------------------------------------------------------ */
-function Home({ articles, openArticle, go }) {
-  const featured = articles.find((a) => a.featured) || articles[0];
-  const latest = articles.filter((a) => a.id !== featured.id).slice(0, 4);
+function Home({ articles, openArticle, go, loadStatus }) {
+  const featured = articles.find((a) => a.featured) || articles[0] || null;
+  const latest = featured ? articles.filter((a) => a.id !== featured.id).slice(0, 4) : [];
 
   return (
     <>
@@ -545,7 +525,8 @@ function Home({ articles, openArticle, go }) {
           </Reveal>
           <Reveal delay={160}>
             <p className="mt-8 text-[17px] md:text-xl leading-9 text-neutral-500 max-w-xl mx-auto">
-نوشته های شخصی یه فعال رسانه ای دهه هشتادی            </p>
+              نوشته‌های شخصی سیاسی و تحلیل راهبردی؛ جایی برای فکرکردنِ آرام درباره‌ی قدرت، جامعه و آینده.
+            </p>
           </Reveal>
           <Reveal delay={240}>
             <div className="mt-10 flex items-center justify-center gap-3">
@@ -569,47 +550,62 @@ function Home({ articles, openArticle, go }) {
       </section>
 
       {/* Featured */}
-      <section className="max-w-6xl mx-auto px-5 md:px-8">
-        <Reveal>
-          <div className="flex items-end justify-between mb-6">
-            <h2 className="text-xl md:text-2xl font-bold" style={{ color: COLORS.ink }}>مقاله ویژه</h2>
-          </div>
-        </Reveal>
-        <Reveal delay={80}>
-          <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center bg-white rounded-3xl p-5 md:p-8" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 16px 40px rgba(0,0,0,0.05)" }}>
-            <ArticleCard article={featured} onOpen={openArticle} big />
-            <div className="hidden md:flex flex-col gap-5">
-              <p className="text-[15px] leading-8 text-neutral-500">{featured.excerpt}</p>
-              <button
-                onClick={() => openArticle(featured.id)}
-                className="w-fit flex items-center gap-2 text-[14px] font-semibold transition-transform hover:-translate-x-1"
-                style={{ color: COLORS.primary }}
-              >
-                ادامه مطلب <ArrowUpLeft size={15} />
-              </button>
+      {featured && (
+        <section className="max-w-6xl mx-auto px-5 md:px-8">
+          <Reveal>
+            <div className="flex items-end justify-between mb-6">
+              <h2 className="text-xl md:text-2xl font-bold" style={{ color: COLORS.ink }}>مقاله ویژه</h2>
             </div>
-          </div>
-        </Reveal>
-      </section>
+          </Reveal>
+          <Reveal delay={80}>
+            <div className="grid md:grid-cols-2 gap-8 md:gap-12 items-center bg-white rounded-3xl p-5 md:p-8" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.04), 0 16px 40px rgba(0,0,0,0.05)" }}>
+              <ArticleCard article={featured} onOpen={openArticle} big />
+              <div className="hidden md:flex flex-col gap-5">
+                <p className="text-[15px] leading-8 text-neutral-500">{featured.excerpt}</p>
+                <button
+                  onClick={() => openArticle(featured.id)}
+                  className="w-fit flex items-center gap-2 text-[14px] font-semibold transition-transform hover:-translate-x-1"
+                  style={{ color: COLORS.primary }}
+                >
+                  ادامه مطلب <ArrowUpLeft size={15} />
+                </button>
+              </div>
+            </div>
+          </Reveal>
+        </section>
+      )}
+
+      {!featured && (
+        <section className="max-w-3xl mx-auto px-5 md:px-8 text-center py-10">
+          <p className="text-[14.5px] text-neutral-400 leading-8">
+            {loadStatus === "loading" && "در حال بارگذاری مقالات…"}
+            {loadStatus === "ready" && "هنوز مقاله‌ای منتشر نشده. از پنل مدیریت (/admin) اولین مقاله را بسازید."}
+            {loadStatus === "error" && "بارگذاری مقالات با مشکل مواجه شد. لطفاً بعداً دوباره امتحان کنید."}
+            {loadStatus === "unconfigured" && "سایت هنوز به دیتابیس وصل نیست."}
+          </p>
+        </section>
+      )}
 
       {/* Latest */}
-      <section className="max-w-6xl mx-auto px-5 md:px-8 mt-24">
-        <Reveal>
-          <div className="flex items-end justify-between mb-8">
-            <h2 className="text-xl md:text-2xl font-bold" style={{ color: COLORS.ink }}>آخرین مقالات</h2>
-            <button onClick={() => go("articles")} className="text-[13.5px] font-medium flex items-center gap-1" style={{ color: COLORS.primary }}>
-              مشاهده همه <ArrowUpLeft size={13} />
-            </button>
+      {latest.length > 0 && (
+        <section className="max-w-6xl mx-auto px-5 md:px-8 mt-24">
+          <Reveal>
+            <div className="flex items-end justify-between mb-8">
+              <h2 className="text-xl md:text-2xl font-bold" style={{ color: COLORS.ink }}>آخرین مقالات</h2>
+              <button onClick={() => go("articles")} className="text-[13.5px] font-medium flex items-center gap-1" style={{ color: COLORS.primary }}>
+                مشاهده همه <ArrowUpLeft size={13} />
+              </button>
+            </div>
+          </Reveal>
+          <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-7">
+            {latest.map((a, i) => (
+              <Reveal key={a.id} delay={i * 70}>
+                <ArticleCard article={a} onOpen={openArticle} />
+              </Reveal>
+            ))}
           </div>
-        </Reveal>
-        <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-7">
-          {latest.map((a, i) => (
-            <Reveal key={a.id} delay={i * 70}>
-              <ArticleCard article={a} onOpen={openArticle} />
-            </Reveal>
-          ))}
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Categories */}
       <section className="max-w-6xl mx-auto px-5 md:px-8 mt-24">
@@ -659,7 +655,7 @@ function Home({ articles, openArticle, go }) {
 /* ------------------------------------------------------------------ */
 function ArticlesList({ articles, openArticle }) {
   const [active, setActive] = useState("all");
-  const filtered = active === "all" ? articles : articles.filter((a) => a.category === active);
+  const filtered = active === "all" ? articles : articles.filter((a) => (a.categories || []).includes(active));
 
   return (
     <div className="max-w-6xl mx-auto px-5 md:px-8 pt-16 pb-10">
@@ -728,11 +724,13 @@ function ArticleDetail({ article, all, openArticle, go }) {
   }, []);
 
   if (!article) return null;
-  const cat = catById(article.category);
+  const cats = (article.categories || []).map(catById).filter(Boolean);
   const idx = all.findIndex((a) => a.id === article.id);
   const prev = all[idx + 1];
   const next = all[idx - 1];
-  const related = all.filter((a) => a.category === article.category && a.id !== article.id).slice(0, 3);
+  const related = all
+    .filter((a) => a.id !== article.id && (a.categories || []).some((c) => (article.categories || []).includes(c)))
+    .slice(0, 3);
 
   return (
     <div>
@@ -745,9 +743,13 @@ function ArticleDetail({ article, all, openArticle, go }) {
           <ChevronRight size={15} /> بازگشت به مقالات
         </button>
 
-        <span className="inline-block text-[12px] font-medium px-3 py-1 rounded-full mb-5" style={{ background: "rgba(193,18,31,0.08)", color: COLORS.primary }}>
-          {cat.fa}
-        </span>
+        <div className="flex flex-wrap gap-2 mb-5">
+          {cats.map((cat) => (
+            <span key={cat.id} className="inline-block text-[12px] font-medium px-3 py-1 rounded-full" style={{ background: "rgba(193,18,31,0.08)", color: COLORS.primary }}>
+              {cat.fa}
+            </span>
+          ))}
+        </div>
         <h1 className="text-3xl md:text-[44px] font-extrabold leading-[1.35] mb-6" style={{ color: COLORS.ink }}>
           {article.title}
         </h1>
@@ -756,13 +758,14 @@ function ArticleDetail({ article, all, openArticle, go }) {
           <span className="flex items-center gap-1.5"><Clock size={14} />{readingTime(article.content)} دقیقه مطالعه</span>
         </div>
 
-        <Cover className="w-full h-56 md:h-96 mb-12" />
+        <Cover url={article.coverUrl} className="w-full h-56 md:h-96 mb-12" />
 
-        <article ref={contentRef} className="text-[18px] leading-[2.15] text-[#333] space-y-7" style={{ textAlign: "justify" }}>
-          {article.content.map((p, i) => (
-            <p key={i}>{p}</p>
-          ))}
-        </article>
+        <article
+          ref={contentRef}
+          className="article-body text-[18px] leading-[2.15] text-[#333]"
+          style={{ textAlign: "justify" }}
+          dangerouslySetInnerHTML={{ __html: article.content }}
+        />
 
         {article.tags?.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-12">
@@ -821,7 +824,7 @@ function CategoriesPage({ articles, go, setFilterCat }) {
       </Reveal>
       <div className="grid sm:grid-cols-2 gap-6">
         {CATEGORIES.map((c, i) => {
-          const count = articles.filter((a) => a.category === c.id).length;
+          const count = articles.filter((a) => (a.categories || []).includes(c.id)).length;
           return (
             <Reveal key={c.id} delay={i * 70}>
               <button
@@ -858,9 +861,9 @@ function About() {
       </Reveal>
       <Reveal delay={80}>
         <div className="space-y-6 text-[17px] leading-[2.1] text-[#3a3a3d]">
-          <p>الکترون یک رسانه خبری نیست. درواقع دفترچه‌ای نیمه شخصی از تحلیل ها و روایات یک فعال رسانه ای است که از چپ و راست بیزاره. رویداد های سیاسی رو بررسی و تحلیل میکنیم.</p>
-          <p>مخاطب این نوشته‌ها، جوون های هم سن و سال من هستند که از بی عدالتی و ظلم و زد و بند بازی خسته شدن و در جست و جوی عدالتند .</p>
-          <p>هدف من ساده است: نوشتنِ صادقانه، مستقل و عدالتطلبانه. بدون پروژه.پشت هر مقاله، حاصل ساعت‌ها مطالعه و بازاندیشی وجود داره سریع ازش نگذرید.</p>
+          <p>الکترون یک رسانه‌ی خبری نیست؛ یک دفترچه‌ی شخصی تحلیل است. اینجا جایی است که رویدادهای سیاسی و راهبردی، نه در قالب خبر لحظه‌ای، بلکه در بستر روندهای بلندمدت و الگوهای تکرارشونده‌ی تاریخی بررسی می‌شوند.</p>
+          <p>مخاطب این نوشته‌ها، جوانانی هستند که هم به دین پایبندند و هم به سیاست علاقه‌مند؛ کسانی که به‌جای مصرف سریع اخبار، به دنبال درک عمیق‌تری از چرایی رویدادها هستند.</p>
+          <p>هدف من ساده است: نوشتنِ صادقانه، مستقل و دقیق؛ بدون شعار و بدون شتاب‌زدگی. هر مقاله، حاصل ساعت‌ها مطالعه و بازاندیشی است، نه واکنشی آنی به عناوین روز.</p>
         </div>
       </Reveal>
       <Reveal delay={160}>
@@ -896,9 +899,9 @@ function Contact() {
       <Reveal delay={80}>
         <div className="grid md:grid-cols-3 gap-5 mb-12">
           {[
-            { Icon: Mail, l: "ایمیل", v: "شرمنده(:" },
-            { Icon: MapPin, l: "موقعیت", v: "قزوین، ایران" },
-            { Icon: Phone, l: " کانال بله", v: "@electron_ir" },
+            { Icon: Mail, l: "ایمیل", v: "contact@electron.blog" },
+            { Icon: MapPin, l: "موقعیت", v: "تهران، ایران" },
+            { Icon: Phone, l: "شبکه‌های اجتماعی", v: "@electron" },
           ].map((it) => (
             <div key={it.l} className="p-5 rounded-2xl bg-white flex items-start gap-3" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
               <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "rgba(193,18,31,0.08)" }}>
@@ -932,7 +935,7 @@ function Contact() {
             <input placeholder="موضوع" className="w-full px-4 py-3 rounded-xl bg-[#F8F9FA] outline-none text-[14px]" />
             <textarea required rows={5} placeholder="پیام شما…" className="w-full px-4 py-3 rounded-xl bg-[#F8F9FA] outline-none text-[14px] resize-none" />
             <button type="submit" className="px-6 py-3 rounded-full text-[14px] font-semibold text-white transition-transform hover:-translate-y-0.5" style={{ background: COLORS.primary }}>
-              ارسال پیام(بزن روش ولی کار نمیکنه)
+              ارسال پیام
             </button>
           </form>
         )}
@@ -1039,12 +1042,13 @@ function AdminPanel() {
       id: null,
       title: "",
       excerpt: "",
-      category: CATEGORIES[0].id,
+      categories: [CATEGORIES[0].id],
       date: "1404/04/01",
       tags: [],
-      content: [""],
+      content: "",
       draft: true,
       featured: false,
+      coverUrl: null,
       seo: { metaTitle: "", metaDescription: "" },
     });
     setTab("editor");
@@ -1063,9 +1067,16 @@ function AdminPanel() {
   };
 
   const deleteArticle = async (id) => {
+    if (!window.confirm("این مقاله برای همیشه حذف شود؟")) return;
     const { error } = await supabase.from("articles").delete().eq("id", id);
     if (error) setError(error.message);
     else setArticles((prev) => prev.filter((a) => a.id !== id));
+  };
+
+  const togglePublish = async (a) => {
+    const { error } = await supabase.from("articles").update({ draft: !a.draft }).eq("id", a.id);
+    if (error) setError(error.message);
+    else setArticles((prev) => prev.map((x) => (x.id === a.id ? { ...x, draft: !x.draft } : x)));
   };
 
   const signOut = async () => { await supabase.auth.signOut(); };
@@ -1129,7 +1140,7 @@ function AdminPanel() {
                 </div>
               ))}
               <div className="sm:col-span-3 p-6 rounded-2xl bg-white text-[13.5px] text-neutral-500 leading-7" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
-                این پنل حالا به دیتابیس واقعی (Supabase Postgres) وصل است: مقالاتی که اینجا می‌سازید یا ویرایش می‌کنید، برای همه‌ی بازدیدکنندگان سایت — از هر دستگاهی — قابل مشاهده‌اند (مگر آن‌که «پیش‌نویس» باشند).
+                این پنل به دیتابیس واقعی (Supabase Postgres) وصل است: مقالاتی که اینجا می‌سازید یا ویرایش می‌کنید، برای همه‌ی بازدیدکنندگان سایت — از هر دستگاهی — قابل مشاهده‌اند (مگر آن‌که «پیش‌نویس» باشند). هیچ مقاله‌ی نمونه‌ای در کد سایت وجود ندارد؛ هر چه ببینید از همین جدول `articles` می‌آید.
               </div>
             </div>
           )}
@@ -1137,24 +1148,30 @@ function AdminPanel() {
           {tab === "articles" && !editing && (
             <div className="bg-white rounded-2xl overflow-hidden" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
               <div className="grid grid-cols-[1fr_auto_auto_auto] gap-3 px-5 py-3 text-[12px] text-neutral-400 border-b border-black/5">
-                <span>عنوان</span><span>دسته</span><span>وضعیت</span><span></span>
+                <span>عنوان</span><span>دسته‌بندی‌ها</span><span>وضعیت</span><span></span>
               </div>
               {articles.length === 0 && !loading && (
                 <div className="px-5 py-10 text-center text-[13.5px] text-neutral-400">
-                  هنوز مقاله‌ای در دیتابیس نیست. با دکمه «مقاله جدید» شروع کنید (یا فایل sql/schema.sql را برای داده‌ی نمونه اجرا کنید).
+                  هنوز مقاله‌ای در دیتابیس نیست. با دکمه «مقاله جدید» شروع کنید.
                 </div>
               )}
               {articles.map((a) => (
                 <div key={a.id} className="grid grid-cols-[1fr_auto_auto_auto] gap-3 px-5 py-3.5 items-center border-b border-black/5 last:border-0 text-[13.5px]">
                   <span className="font-medium truncate" style={{ color: COLORS.ink }}>{a.title || "(بدون عنوان)"}</span>
-                  <span className="text-neutral-400 whitespace-nowrap">{catById(a.category)?.fa}</span>
-                  <span className="whitespace-nowrap">
-                    {a.draft ? (
-                      <span className="flex items-center gap-1 text-amber-600 text-[12px]"><EyeOff size={12}/> پیش‌نویس</span>
-                    ) : (
-                      <span className="flex items-center gap-1 text-emerald-600 text-[12px]"><Eye size={12}/> منتشرشده</span>
-                    )}
+                  <span className="text-neutral-400 whitespace-nowrap text-[12px] max-w-[180px] truncate">
+                    {(a.categories || []).map((cid) => catById(cid)?.fa).filter(Boolean).join("، ") || "—"}
                   </span>
+                  <button
+                    onClick={() => togglePublish(a)}
+                    className="whitespace-nowrap"
+                    title="برای تغییر وضعیت انتشار کلیک کنید"
+                  >
+                    {a.draft ? (
+                      <span className="flex items-center gap-1 text-amber-600 text-[12px] hover:underline"><EyeOff size={12}/> پیش‌نویس</span>
+                    ) : (
+                      <span className="flex items-center gap-1 text-emerald-600 text-[12px] hover:underline"><Eye size={12}/> منتشرشده</span>
+                    )}
+                  </button>
                   <span className="flex items-center gap-1">
                     <button onClick={() => { setEditing(a); setTab("editor"); }} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-black/5"><Pencil size={14} /></button>
                     <button onClick={() => deleteArticle(a.id)} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-red-50"><Trash2 size={14} color={COLORS.primary} /></button>
@@ -1179,7 +1196,7 @@ function AdminPanel() {
                   <span className="text-[12px] px-2.5 py-1 rounded-full" style={{ background: "rgba(193,18,31,0.08)", color: COLORS.primary }}>ثابت</span>
                 </div>
               ))}
-              <p className="sm:col-span-2 text-[12.5px] text-neutral-400">دسته‌بندی‌ها در این نسخه ثابت تعریف شده‌اند؛ در آینده می‌توان یک جدول categories جدا در Supabase اضافه کرد.</p>
+              <p className="sm:col-span-2 text-[12.5px] text-neutral-400">دسته‌بندی‌ها در این نسخه ثابت تعریف شده‌اند؛ در آینده می‌توان یک جدول categories جدا در Supabase اضافه کرد. هر مقاله می‌تواند هم‌زمان چند دسته‌بندی داشته باشد (از فرم ویرایش مقاله).</p>
             </div>
           )}
         </div>
@@ -1188,9 +1205,141 @@ function AdminPanel() {
   );
 }
 
+/* ------------------------------------------------------------------ */
+/*  RICH TEXT EDITOR (no external deps — contentEditable + execCommand) */
+/* ------------------------------------------------------------------ */
+function RichTextEditor({ initialHtml, onChange }) {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (ref.current) ref.current.innerHTML = initialHtml || "<p></p>";
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const exec = (cmd, arg = null) => {
+    ref.current?.focus();
+    document.execCommand(cmd, false, arg);
+    onChange(ref.current.innerHTML);
+  };
+
+  const insertLink = () => {
+    const url = window.prompt("آدرس لینک را وارد کنید:", "https://");
+    if (url) exec("createLink", url);
+  };
+
+  const btn = (icon, title, onClick) => (
+    <button
+      type="button"
+      title={title}
+      onMouseDown={(e) => e.preventDefault()}
+      onClick={onClick}
+      className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-black/5 transition-colors"
+      style={{ color: COLORS.ink }}
+    >
+      {icon}
+    </button>
+  );
+
+  return (
+    <div className="rounded-xl overflow-hidden border border-black/10">
+      <div className="flex flex-wrap items-center gap-0.5 px-2 py-1.5 bg-[#F8F9FA] border-b border-black/10">
+        {btn(<Bold size={16} />, "پررنگ", () => exec("bold"))}
+        {btn(<Italic size={16} />, "مورب", () => exec("italic"))}
+        {btn(<Underline size={16} />, "زیرخط", () => exec("underline"))}
+        <span className="w-px h-5 bg-black/10 mx-1" />
+        {btn(<Heading2 size={16} />, "تیتر", () => exec("formatBlock", "H2"))}
+        {btn(<QuoteIcon size={16} />, "نقل‌قول", () => exec("formatBlock", "BLOCKQUOTE"))}
+        {btn(<span className="text-[13px] font-medium px-0.5">پاراگراف</span>, "پاراگراف عادی", () => exec("formatBlock", "P"))}
+        <span className="w-px h-5 bg-black/10 mx-1" />
+        {btn(<List size={16} />, "لیست نقطه‌ای", () => exec("insertUnorderedList"))}
+        {btn(<ListOrdered size={16} />, "لیست شماره‌دار", () => exec("insertOrderedList"))}
+        {btn(<Link2 size={16} />, "درج لینک", insertLink)}
+        <span className="w-px h-5 bg-black/10 mx-1" />
+        {btn(<Undo2 size={16} />, "واگرد", () => exec("undo"))}
+        {btn(<Redo2 size={16} />, "ازنو", () => exec("redo"))}
+      </div>
+      <div
+        ref={ref}
+        contentEditable
+        suppressContentEditableWarning
+        onInput={(e) => onChange(e.currentTarget.innerHTML)}
+        className="article-body px-5 py-4 min-h-[320px] max-h-[600px] overflow-y-auto text-[16px] leading-8 outline-none"
+        style={{ textAlign: "justify" }}
+      />
+    </div>
+  );
+}
+
+function CoverUploader({ value, onChange }) {
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleFile = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow re-selecting the same file later
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { setError("فقط فایل تصویری مجاز است."); return; }
+    if (file.size > 5 * 1024 * 1024) { setError("حجم تصویر باید کمتر از ۵ مگابایت باشد."); return; }
+    setError("");
+    setUploading(true);
+    const safeName = file.name.replace(/[^a-zA-Z0-9.\-]/g, "_");
+    const path = `${Date.now()}-${safeName}`;
+    const { error: upErr } = await supabase.storage.from("covers").upload(path, file, { upsert: false });
+    if (upErr) {
+      setError(
+        upErr.message?.includes("Bucket not found")
+          ? "باکت «covers» هنوز در Supabase ساخته نشده — راهنمای README را ببینید."
+          : upErr.message
+      );
+      setUploading(false);
+      return;
+    }
+    const { data } = supabase.storage.from("covers").getPublicUrl(path);
+    onChange(data.publicUrl);
+    setUploading(false);
+  };
+
+  return (
+    <div>
+      <label className="text-[12.5px] text-neutral-500 mb-1.5 block">تصویر کاور</label>
+      {value ? (
+        <div className="relative rounded-xl overflow-hidden h-40 mb-3">
+          <img src={value} alt="" className="w-full h-full object-cover" />
+          <button
+            type="button"
+            onClick={() => onChange(null)}
+            className="absolute top-2 left-2 w-8 h-8 rounded-full bg-black/60 flex items-center justify-center text-white hover:bg-black/80"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      ) : (
+        <div className="h-40 rounded-xl mb-3 flex items-center justify-center border border-dashed border-black/10 text-neutral-300">
+          <ImageIcon size={26} />
+        </div>
+      )}
+      <label className="flex items-center gap-2 w-fit px-4 py-2.5 rounded-xl border border-black/10 text-[13px] cursor-pointer hover:bg-black/5 transition-colors">
+        <ImageIcon size={15} />
+        {uploading ? "در حال آپلود…" : "انتخاب تصویر"}
+        <input type="file" accept="image/*" className="hidden" onChange={handleFile} disabled={uploading} />
+      </label>
+      {error && <p className="text-[12px] text-red-600 mt-2">{error}</p>}
+      <p className="text-[11.5px] text-neutral-400 mt-2">اگر تصویری انتخاب نشود، کاور به‌صورت خودکار طراحی می‌شود.</p>
+    </div>
+  );
+}
+
 function ArticleEditor({ article, onCancel, onSave }) {
   const [form, setForm] = useState(article);
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  const toggleCategory = (id) => {
+    setForm((f) => {
+      const has = f.categories.includes(id);
+      const next = has ? f.categories.filter((c) => c !== id) : [...f.categories, id];
+      return { ...f, categories: next.length ? next : f.categories }; // keep at least one
+    });
+  };
 
   return (
     <div className="bg-white rounded-2xl p-6 space-y-5" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
@@ -1204,16 +1353,36 @@ function ArticleEditor({ article, onCancel, onSave }) {
         />
       </div>
 
-      <div className="grid sm:grid-cols-2 gap-4">
-        <div>
-          <label className="text-[12.5px] text-neutral-500 mb-1.5 block">دسته‌بندی</label>
-          <select value={form.category} onChange={(e) => set("category", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-[#F8F9FA] outline-none text-[14px]">
-            {CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.fa}</option>)}
-          </select>
+      <div>
+        <label className="text-[12.5px] text-neutral-500 mb-2 block">دسته‌بندی‌ها (می‌توانید چند مورد انتخاب کنید)</label>
+        <div className="flex flex-wrap gap-2">
+          {CATEGORIES.map((c) => {
+            const active = form.categories.includes(c.id);
+            return (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => toggleCategory(c.id)}
+                className="px-3.5 py-1.5 rounded-full text-[13px] font-medium transition-colors"
+                style={active ? { background: COLORS.primary, color: "#fff" } : { background: "#F8F9FA", color: COLORS.ink }}
+              >
+                {c.fa}
+              </button>
+            );
+          })}
         </div>
+      </div>
+
+      <div className="grid sm:grid-cols-2 gap-4">
         <div>
           <label className="text-[12.5px] text-neutral-500 mb-1.5 block">تاریخ انتشار</label>
           <input value={form.date} onChange={(e) => set("date", e.target.value)} className="w-full px-4 py-3 rounded-xl bg-[#F8F9FA] outline-none text-[14px]" />
+        </div>
+        <div className="flex items-end">
+          <label className="flex items-center gap-2.5 text-[13.5px] cursor-pointer">
+            <input type="checkbox" checked={!!form.featured} onChange={(e) => set("featured", e.target.checked)} className="w-4 h-4" />
+            <Star size={14} color={COLORS.primary} /> نمایش به‌عنوان مقاله ویژه
+          </label>
         </div>
       </div>
 
@@ -1223,13 +1392,8 @@ function ArticleEditor({ article, onCancel, onSave }) {
       </div>
 
       <div>
-        <label className="text-[12.5px] text-neutral-500 mb-1.5 block">متن مقاله (هر پاراگراف در یک خط)</label>
-        <textarea
-          value={form.content.join("\n")}
-          onChange={(e) => set("content", e.target.value.split("\n"))}
-          rows={7}
-          className="w-full px-4 py-3 rounded-xl bg-[#F8F9FA] outline-none text-[14px] leading-7 resize-none"
-        />
+        <label className="text-[12.5px] text-neutral-500 mb-1.5 block">متن مقاله</label>
+        <RichTextEditor initialHtml={form.content} onChange={(html) => set("content", html)} />
       </div>
 
       <div>
@@ -1241,10 +1405,7 @@ function ArticleEditor({ article, onCancel, onSave }) {
         />
       </div>
 
-      <div className="p-4 rounded-xl border border-dashed border-black/10 flex items-center gap-3 text-neutral-400">
-        <ImageIcon size={18} />
-        <span className="text-[13px]">آپلود تصویر کاور (در این پیش‌نمایش، کاور به‌صورت خودکار طراحی می‌شود)</span>
-      </div>
+      <CoverUploader value={form.coverUrl} onChange={(url) => set("coverUrl", url)} />
 
       <div className="grid sm:grid-cols-2 gap-4 pt-2 border-t border-black/5">
         <div>
@@ -1264,7 +1425,7 @@ function ArticleEditor({ article, onCancel, onSave }) {
 
       <div className="flex items-center gap-3 pt-2">
         <button
-          onClick={() => onSave({ ...form, featured: false })}
+          onClick={() => onSave(form)}
           disabled={!form.title.trim()}
           className="flex items-center gap-2 px-6 py-3 rounded-full text-[14px] font-semibold text-white transition-transform hover:-translate-y-0.5 disabled:opacity-40"
           style={{ background: COLORS.primary }}
@@ -1282,31 +1443,33 @@ function ArticleEditor({ article, onCancel, onSave }) {
 /* ------------------------------------------------------------------ */
 /*  ROOT APP                                                            */
 /* ------------------------------------------------------------------ */
-export default function ElectronBlog() {
+function ElectronBlog() {
   useVazirFont();
   const [page, setPage] = useState("home");
   const [activeId, setActiveId] = useState(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [dbArticles, setDbArticles] = useState(null); // null = not loaded yet
+  const [loadStatus, setLoadStatus] = useState(isSupabaseConfigured ? "loading" : "unconfigured");
   const [, setFilterCat] = useState("all");
 
-  useEffect(() => {
-    if (!isSupabaseConfigured) return; // stay on seed data
-    (async () => {
-      const { data, error } = await supabase
-        .from("articles")
-        .select("*")
-        .eq("draft", false)
-        .order("created_at", { ascending: false });
-      if (!error && data) setDbArticles(data.map(fromDbRow));
-    })();
-  }, []);
+  const loadPublicArticles = () => {
+    if (!isSupabaseConfigured) { setLoadStatus("unconfigured"); return; }
+    setLoadStatus("loading");
+    supabase
+      .from("articles")
+      .select("*")
+      .eq("draft", false)
+      .order("created_at", { ascending: false })
+      .then(({ data, error }) => {
+        if (error) { setLoadStatus("error"); return; }
+        setDbArticles(data.map(fromDbRow));
+        setLoadStatus("ready");
+      });
+  };
 
-  // Prefer live database articles once loaded; fall back to the built-in
-  // sample set so the site still looks complete before Supabase is wired up.
-  const allArticles = useMemo(() => {
-    return dbArticles && dbArticles.length ? dbArticles : SEED_ARTICLES;
-  }, [dbArticles]);
+  useEffect(() => { loadPublicArticles(); }, []);
+
+  const allArticles = useMemo(() => dbArticles || [], [dbArticles]);
 
   const go = (p) => { setPage(p); setSearchOpen(false); window.scrollTo({ top: 0, behavior: "smooth" }); };
   const openArticle = (id) => { setActiveId(id); setPage("article"); window.scrollTo({ top: 0 }); };
@@ -1327,10 +1490,30 @@ export default function ElectronBlog() {
 
       <Header page={page} go={go} searchOpen={searchOpen} setSearchOpen={setSearchOpen} />
 
-      {page === "home" && <Home articles={allArticles} openArticle={openArticle} go={go} />}
+      {loadStatus === "error" && (
+        <div className="max-w-6xl mx-auto px-5 md:px-8 mt-6">
+          <div className="flex items-center justify-between gap-4 flex-wrap bg-red-50 border border-red-100 rounded-2xl px-5 py-3.5 text-[13.5px]" style={{ color: COLORS.primary }}>
+            <span className="flex items-center gap-2"><AlertTriangle size={16} /> ارتباط با پایگاه‌داده برقرار نشد. اینترنت یا تنظیمات Supabase را بررسی کنید.</span>
+            <button onClick={loadPublicArticles} className="flex items-center gap-1.5 font-semibold hover:underline">
+              <RefreshCw size={13} /> تلاش دوباره
+            </button>
+          </div>
+        </div>
+      )}
+
+      {page === "home" && <Home articles={allArticles} openArticle={openArticle} go={go} loadStatus={loadStatus} />}
       {page === "articles" && <ArticlesList articles={allArticles} openArticle={openArticle} />}
-      {page === "article" && activeArticle && (
-        <ArticleDetail article={activeArticle} all={allArticles} openArticle={openArticle} go={go} />
+      {page === "article" && (
+        activeArticle ? (
+          <ArticleDetail article={activeArticle} all={allArticles} openArticle={openArticle} go={go} />
+        ) : (
+          <EmptyState
+            title={loadStatus === "loading" ? "در حال بارگذاری…" : "این مقاله پیدا نشد"}
+            note={loadStatus === "loading" ? null : "ممکن است حذف شده یا آدرس اشتباه باشد."}
+            actionLabel={loadStatus === "loading" ? null : "بازگشت به مقالات"}
+            onAction={() => go("articles")}
+          />
+        )
       )}
       {page === "categories" && <CategoriesPage articles={allArticles} go={go} setFilterCat={setFilterCat} />}
       {page === "about" && <About />}
@@ -1339,5 +1522,13 @@ export default function ElectronBlog() {
 
       {page !== "admin" && <Footer go={go} />}
     </div>
+  );
+}
+
+export default function ElectronBlogWithBoundary() {
+  return (
+    <ErrorBoundary>
+      <ElectronBlog />
+    </ErrorBoundary>
   );
 }

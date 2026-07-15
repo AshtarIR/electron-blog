@@ -1,6 +1,11 @@
 -- ============================================================
--- Electron Blog — Supabase schema
+-- Electron Blog — Supabase schema (v2)
 -- Run this once inside: Supabase Dashboard → SQL Editor → New query
+--
+-- If you already ran the OLD version of this file (single `category`
+-- column, `content` as a text[] of paragraphs), do NOT run this file —
+-- run sql/migrate_to_v2.sql instead, it upgrades your existing table
+-- in place without losing data.
 -- ============================================================
 
 create table if not exists articles (
@@ -8,11 +13,11 @@ create table if not exists articles (
   title        text not null,
   slug         text unique,
   excerpt      text default '',
-  content      text[] default '{}',      -- one paragraph per array item
-  category     text not null default 'politics',
+  content      text default '',        -- rich-text HTML from the admin editor
+  categories   text[] not null default '{}',  -- an article can belong to several categories
   tags         text[] default '{}',
   cover_url    text,
-  date_label   text,                     -- display date e.g. "1404/04/01"
+  date_label   text,                   -- display date e.g. "1404/04/01"
   draft        boolean not null default true,
   featured     boolean not null default false,
   seo_title    text,
@@ -54,25 +59,6 @@ create policy "authenticated full access"
   using (auth.role() = 'authenticated')
   with check (auth.role() = 'authenticated');
 
--- ------------------------------------------------------------
--- Seed data (the 6 sample articles from the prototype)
--- Safe to skip if you'd rather start empty.
--- ------------------------------------------------------------
-insert into articles (title, slug, excerpt, content, category, tags, date_label, draft, featured)
-values
-(
-  'معمای مشروعیت در دولت‌های پساتحول',
-  'legitimacy-post-transition-states',
-  'چرا برخی نظام‌های سیاسی پس از تحولات بزرگ، سال‌ها با بحران مشروعیت دست‌وپنجه نرم می‌کنند؟',
-  array[
-    'مشروعیت سیاسی، برخلاف تصور رایج، یک‌بار برای همیشه کسب نمی‌شود؛ بلکه فرآیندی مستمر از اقناع، عملکرد و روایت‌سازی است.',
-    'در دوره‌های گذار، شکاف میان مشروعیت رویه‌ای و مشروعیت کارکردی بیش از هر زمان دیگری خود را نشان می‌دهد.',
-    'تجربه بسیاری از کشورها نشان می‌دهد که ترکیب روایت مؤسس، کارآمدی اقتصادی، و مشارکت نهادینه‌شده، تعیین‌کننده پایداری مشروعیت است.'
-  ],
-  'governance',
-  array['مشروعیت','دولت','نظریه سیاسی'],
-  '1404/03/12',
-  false,
-  true
-)
-on conflict (slug) do nothing;
+-- No seed data on purpose — the site ships with zero hardcoded
+-- articles. Everything you see comes from this table, created
+-- through /admin.
