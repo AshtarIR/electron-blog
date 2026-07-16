@@ -50,10 +50,28 @@ function uid() {
   return "u" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
+// Turns a title into a URL-safe slug when possible; falls back to a short
+// random code for titles that are entirely non-Latin (e.g. Persian) since
+// those wouldn't produce a readable slug anyway.
+function slugify(title) {
+  const base = (title || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+  return base || shortCode();
+}
+function shortCode() {
+  return Math.random().toString(36).slice(2, 8);
+}
+
 // Maps a Supabase `articles` row (snake_case) to the shape the UI expects.
 function fromDbRow(row) {
   return {
     id: row.id,
+    slug: row.slug || null,
     title: row.title,
     excerpt: row.excerpt || "",
     categories: row.categories && row.categories.length ? row.categories : [row.category].filter(Boolean),
@@ -71,6 +89,7 @@ function fromDbRow(row) {
 function toDbRow(article) {
   return {
     title: article.title,
+    slug: article.slug || null,
     excerpt: article.excerpt,
     categories: article.categories,
     date_label: article.date,
@@ -746,7 +765,7 @@ function ArticleDetail({ article, all, openArticle, go }) {
   const contentRef = useRef(null);
 
   const shareUrl = typeof window !== "undefined"
-    ? `${window.location.origin}${window.location.pathname}?a=${article.id}`
+    ? `${window.location.origin}${window.location.pathname}?${article.slug ? `p=${article.slug}` : `a=${article.id}`}`
     : "";
 
   const share = (type) => {
@@ -1105,6 +1124,7 @@ function AdminPanel() {
   const startNew = () => {
     setEditing({
       id: null,
+      slug: shortCode(),
       title: "",
       excerpt: "",
       categories: [CATEGORIES[0].id],
@@ -1126,8 +1146,17 @@ function AdminPanel() {
     const { error } = art.id
       ? await supabase.from("articles").update(row).eq("id", art.id)
       : await supabase.from("articles").insert(row);
-    if (error) setError(error.message);
-    else { await loadArticles(); setEditing(null); setTab("articles"); }
+    if (error) {
+      setError(
+        error.code === "23505"
+          ? "این نامک (لینک اختصاصی) قبلاً برای مقاله‌ی دیگری استفاده شده؛ یک نامک دیگر انتخاب کنید."
+          : error.message
+      );
+    } else {
+      await loadArticles();
+      setEditing(null);
+      setTab("articles");
+    }
     setLoading(false);
   };
 
@@ -1396,6 +1425,7 @@ function CoverUploader({ value, onChange }) {
 
 function ArticleEditor({ article, onCancel, onSave }) {
   const [form, setForm] = useState(article);
+  const [slugCopied, setSlugCopied] = useState(false);
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   const toggleCategory = (id) => {
@@ -1403,6 +1433,17 @@ function ArticleEditor({ article, onCancel, onSave }) {
       const has = f.categories.includes(id);
       const next = has ? f.categories.filter((c) => c !== id) : [...f.categories, id];
       return { ...f, categories: next.length ? next : f.categories }; // keep at least one
+    });
+  };
+
+  const shareLink = form.slug
+    ? `${window.location.origin}${window.location.pathname}?p=${form.slug}`
+    : "";
+  const copyShareLink = () => {
+    if (!shareLink) return;
+    navigator.clipboard?.writeText(shareLink).then(() => {
+      setSlugCopied(true);
+      setTimeout(() => setSlugCopied(false), 1800);
     });
   };
 
@@ -1416,6 +1457,38 @@ function ArticleEditor({ article, onCancel, onSave }) {
           placeholder="عنوان را وارد کنید…"
           className="w-full px-4 py-3 rounded-xl bg-[#F8F9FA] outline-none text-[15px] font-medium"
         />
+      </div>
+
+      <div>
+        <label className="text-[12.5px] text-neutral-500 mb-1.5 block">نامک (لینک اختصاصی)</label>
+        <div className="flex items-center gap-2">
+          <input
+            value={form.slug || ""}
+            onChange={(e) => set("slug", slugify(e.target.value))}
+            placeholder="مثلاً: eghtesad-tahrim"
+            dir="ltr"
+            className="flex-1 px-4 py-3 rounded-xl bg-[#F8F9FA] outline-none text-[13.5px]"
+          />
+          <button
+            type="button"
+            onClick={() => set("slug", slugify(form.title) === "" ? shortCode() : slugify(form.title))}
+            className="px-3.5 py-3 rounded-xl text-[12.5px] font-medium whitespace-nowrap hover:bg-black/5 border border-black/10"
+            style={{ color: COLORS.ink }}
+          >
+            ساخت از عنوان
+          </button>
+        </div>
+        {shareLink && (
+          <div className="flex items-center gap-2 mt-2">
+            <span dir="ltr" className="text-[11.5px] text-neutral-400 truncate flex-1">{shareLink}</span>
+            <button type="button" onClick={copyShareLink} className="flex items-center gap-1 text-[11.5px] font-medium hover:underline flex-shrink-0" style={{ color: COLORS.primary }}>
+              {slugCopied ? <><Check size={12} /> کپی شد</> : <><Link2 size={12} /> کپی لینک</>}
+            </button>
+          </div>
+        )}
+        <p className="text-[11.5px] text-neutral-400 mt-1.5">
+          فقط حروف انگلیسی، عدد و خط‌تیره مجاز است. همین لینک کوتاه را برای دیگران بفرستید.
+        </p>
       </div>
 
       <div>
@@ -1537,15 +1610,19 @@ function ElectronBlog() {
   const allArticles = useMemo(() => dbArticles || [], [dbArticles]);
 
   // Deep-link support: once articles are loaded, open whichever one the URL
-  // points to (?a=<id>), so shared links land on the right article.
+  // points to — prefers the short slug (?p=my-article) and falls back to
+  // the raw id (?a=<uuid>) for older links, so shared links land correctly.
   const appliedInitialRoute = useRef(false);
   useEffect(() => {
     if (appliedInitialRoute.current) return;
     if (loadStatus !== "ready") return;
     const params = new URLSearchParams(window.location.search);
+    const slug = params.get("p");
     const aid = params.get("a");
-    if (aid && allArticles.some((a) => a.id === aid)) {
-      setActiveId(aid);
+    const match = (slug && allArticles.find((a) => a.slug === slug)) ||
+      (aid && allArticles.find((a) => a.id === aid));
+    if (match) {
+      setActiveId(match.id);
       setPage("article");
     }
     appliedInitialRoute.current = true;
@@ -1561,7 +1638,9 @@ function ElectronBlog() {
     setActiveId(id);
     setPage("article");
     window.scrollTo({ top: 0 });
-    window.history.pushState({}, "", `${window.location.pathname}?a=${id}`);
+    const article = allArticles.find((a) => a.id === id);
+    const param = article?.slug ? `p=${article.slug}` : `a=${id}`;
+    window.history.pushState({}, "", `${window.location.pathname}?${param}`);
   };
 
   const activeArticle = allArticles.find((a) => a.id === activeId);
