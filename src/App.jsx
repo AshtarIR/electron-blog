@@ -5,7 +5,7 @@ import {
   LayoutDashboard, FileText, Tags, Eye, EyeOff, Atom, Mail, MapPin, Phone,
   ArrowUpLeft, Quote as QuoteIcon, Twitter, LogOut, Lock,
   Bold, Italic, Underline, List, ListOrdered, Heading2, Undo2, Redo2, Star,
-  AlertTriangle, RefreshCw
+  AlertTriangle, RefreshCw, Check
 } from "lucide-react";
 import { supabase, isSupabaseConfigured } from "./lib/supabaseClient";
 
@@ -275,14 +275,24 @@ function Cover({ className = "", url = null }) {
 /* ------------------------------------------------------------------ */
 /*  Header                                                              */
 /* ------------------------------------------------------------------ */
-function Header({ page, go, searchOpen, setSearchOpen }) {
+function Header({ page, go, searchOpen, setSearchOpen, articles = [], openArticle }) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [query, setQuery] = useState("");
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+  useEffect(() => { if (!searchOpen) setQuery(""); }, [searchOpen]);
+
+  const q = query.trim();
+  const results = q
+    ? articles.filter((a) => {
+        const hay = [a.title, a.excerpt, ...(a.tags || [])].join(" ").toLowerCase();
+        return hay.includes(q.toLowerCase());
+      }).slice(0, 6)
+    : [];
 
   const items = [
     { id: "home", label: "خانه" },
@@ -364,10 +374,37 @@ function Header({ page, go, searchOpen, setSearchOpen }) {
               <Search size={16} className="text-neutral-400" />
               <input
                 autoFocus
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
                 placeholder="جستجو در مقالات…"
                 className="flex-1 bg-transparent outline-none text-[14px]"
               />
+              {query && (
+                <button onClick={() => setQuery("")} aria-label="پاک‌کردن">
+                  <X size={14} className="text-neutral-400" />
+                </button>
+              )}
             </div>
+            {q && (
+              <div className="mt-2 bg-white rounded-xl overflow-hidden shadow-[0_2px_18px_rgba(0,0,0,0.06)]">
+                {results.length === 0 ? (
+                  <div className="px-4 py-3.5 text-[13px] text-neutral-400">نتیجه‌ای یافت نشد.</div>
+                ) : (
+                  results.map((a) => (
+                    <button
+                      key={a.id}
+                      onClick={() => { openArticle?.(a.id); setSearchOpen(false); }}
+                      className="w-full text-right px-4 py-3 hover:bg-black/5 border-b last:border-0 border-black/5 transition-colors"
+                    >
+                      <div className="text-[13.5px] font-medium truncate" style={{ color: COLORS.ink }}>{a.title}</div>
+                      <div className="text-[11.5px] text-neutral-400 mt-0.5">
+                        {(a.categories || []).map((cid) => catById(cid)?.fa).filter(Boolean).join("، ")}
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -705,7 +742,30 @@ function ArticlesList({ articles, openArticle }) {
 /* ------------------------------------------------------------------ */
 function ArticleDetail({ article, all, openArticle, go }) {
   const [progress, setProgress] = useState(0);
+  const [copied, setCopied] = useState(false);
   const contentRef = useRef(null);
+
+  const shareUrl = typeof window !== "undefined"
+    ? `${window.location.origin}${window.location.pathname}?a=${article.id}`
+    : "";
+
+  const share = (type) => {
+    if (type === "copy") {
+      navigator.clipboard?.writeText(shareUrl).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1800);
+      });
+      return;
+    }
+    if (type === "telegram") {
+      window.open(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(article.title)}`, "_blank", "noopener");
+      return;
+    }
+    if (type === "twitter") {
+      window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(article.title)}`, "_blank", "noopener");
+      return;
+    }
+  };
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
@@ -777,11 +837,16 @@ function ArticleDetail({ article, all, openArticle, go }) {
 
         <div className="flex items-center gap-3 mt-10 pt-8 border-t border-black/5">
           <span className="text-[13px] text-neutral-400 flex items-center gap-1.5 ml-1"><Share2 size={14} /> اشتراک‌گذاری:</span>
-          {[Twitter, Send, Link2].map((Icon, i) => (
-            <button key={i} className="w-9 h-9 rounded-full flex items-center justify-center bg-white hover:-translate-y-0.5 transition-transform" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
-              <Icon size={15} color={COLORS.ink} />
-            </button>
-          ))}
+          <button onClick={() => share("twitter")} title="اشتراک در ایکس" className="w-9 h-9 rounded-full flex items-center justify-center bg-white hover:-translate-y-0.5 transition-transform" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
+            <Twitter size={15} color={COLORS.ink} />
+          </button>
+          <button onClick={() => share("telegram")} title="اشتراک در تلگرام" className="w-9 h-9 rounded-full flex items-center justify-center bg-white hover:-translate-y-0.5 transition-transform" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
+            <Send size={15} color={COLORS.ink} />
+          </button>
+          <button onClick={() => share("copy")} title="کپی لینک" className="w-9 h-9 rounded-full flex items-center justify-center bg-white hover:-translate-y-0.5 transition-transform" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
+            {copied ? <Check size={15} color="#16a34a" /> : <Link2 size={15} color={COLORS.ink} />}
+          </button>
+          {copied && <span className="text-[12px] text-emerald-600">لینک کپی شد</span>}
         </div>
 
         <div className="grid sm:grid-cols-2 gap-4 mt-10">
@@ -1471,8 +1536,33 @@ function ElectronBlog() {
 
   const allArticles = useMemo(() => dbArticles || [], [dbArticles]);
 
-  const go = (p) => { setPage(p); setSearchOpen(false); window.scrollTo({ top: 0, behavior: "smooth" }); };
-  const openArticle = (id) => { setActiveId(id); setPage("article"); window.scrollTo({ top: 0 }); };
+  // Deep-link support: once articles are loaded, open whichever one the URL
+  // points to (?a=<id>), so shared links land on the right article.
+  const appliedInitialRoute = useRef(false);
+  useEffect(() => {
+    if (appliedInitialRoute.current) return;
+    if (loadStatus !== "ready") return;
+    const params = new URLSearchParams(window.location.search);
+    const aid = params.get("a");
+    if (aid && allArticles.some((a) => a.id === aid)) {
+      setActiveId(aid);
+      setPage("article");
+    }
+    appliedInitialRoute.current = true;
+  }, [loadStatus, allArticles]);
+
+  const go = (p) => {
+    setPage(p);
+    setSearchOpen(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.history.pushState({}, "", window.location.pathname);
+  };
+  const openArticle = (id) => {
+    setActiveId(id);
+    setPage("article");
+    window.scrollTo({ top: 0 });
+    window.history.pushState({}, "", `${window.location.pathname}?a=${id}`);
+  };
 
   const activeArticle = allArticles.find((a) => a.id === activeId);
 
@@ -1488,7 +1578,7 @@ function ElectronBlog() {
         button { cursor: pointer; }
       `}</style>
 
-      <Header page={page} go={go} searchOpen={searchOpen} setSearchOpen={setSearchOpen} />
+      <Header page={page} go={go} searchOpen={searchOpen} setSearchOpen={setSearchOpen} articles={allArticles} openArticle={openArticle} />
 
       {loadStatus === "error" && (
         <div className="max-w-6xl mx-auto px-5 md:px-8 mt-6">
