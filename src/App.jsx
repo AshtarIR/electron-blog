@@ -560,6 +560,13 @@ function Home({ articles, openArticle, go, loadStatus }) {
     <>
       {/* Hero */}
       <section className="relative overflow-hidden">
+        <div
+          className="absolute -top-40 -left-40 w-[560px] h-[560px] rounded-full pointer-events-none -z-10"
+          style={{
+            background: `radial-gradient(circle, ${COLORS.primary}26 0%, ${COLORS.primary}0d 45%, transparent 70%)`,
+            filter: "blur(10px)",
+          }}
+        />
         <div className="absolute inset-0 -z-10">
           <OrbitField opacity={0.35} />
         </div>
@@ -762,7 +769,27 @@ function ArticlesList({ articles, openArticle }) {
 function ArticleDetail({ article, all, openArticle, go }) {
   const [progress, setProgress] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [toc, setToc] = useState([]);
   const contentRef = useRef(null);
+
+  useEffect(() => {
+    const el = contentRef.current;
+    if (!el) { setToc([]); return; }
+    const headings = Array.from(el.querySelectorAll("h2"));
+    const items = headings.map((h, i) => {
+      const id = `sec-${i}`;
+      h.id = id;
+      return { id, text: h.textContent || "" };
+    });
+    setToc(items);
+  }, [article.id, article.content]);
+
+  const jumpToSection = (id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const y = el.getBoundingClientRect().top + window.scrollY - 90;
+    window.scrollTo({ top: y, behavior: "smooth" });
+  };
 
   const shareUrl = typeof window !== "undefined"
     ? `${window.location.origin}${window.location.pathname}?${article.slug ? `p=${article.slug}` : `a=${article.id}`}`
@@ -838,6 +865,26 @@ function ArticleDetail({ article, all, openArticle, go }) {
         </div>
 
         <Cover url={article.coverUrl} className="w-full h-56 md:h-96 mb-12" />
+
+        {toc.length >= 2 && (
+          <div className="rounded-2xl bg-white p-5 md:p-6 mb-10" style={{ boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+            <div className="flex items-center gap-2 text-[13.5px] font-bold mb-4" style={{ color: COLORS.ink }}>
+              <List size={16} color={COLORS.primary} /> فهرست مطالب
+            </div>
+            <div className="flex flex-col gap-2.5">
+              {toc.map((item, i) => (
+                <button
+                  key={item.id}
+                  onClick={() => jumpToSection(item.id)}
+                  className="text-right text-[13.5px] text-neutral-500 hover:text-black transition-colors flex items-start gap-2.5"
+                >
+                  <span className="text-[11px] text-neutral-300 mt-0.5 flex-shrink-0">{String(i + 1).padStart(2, "0")}</span>
+                  <span className="leading-6">{item.text}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <article
           ref={contentRef}
